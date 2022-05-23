@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <base target="_self" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="pragma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no-cache,must-ridate" />
+    <meta http-equiv="expires" content="0" />
+    <title>Blockchain Monitor</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <script src="https://unpkg.com/vue@3"></script>
+    <style>
+      .circle {
+        display: block;
+        float: left;
+        position: relative;
+        width: 0.5rem;
+        height: 0.5rem;
+        background-color: rgba(255, 255, 255, 1);
+        display: block;
+        overflow: hidden;
+        padding: 1%;
+        margin: 1rem;
+        border-radius: 50%;
+      }
+
+      /* 圓標陰影 */
+      .circle {
+        box-shadow: 0 0.46875rem 2.1875rem rgba(90, 97, 105, 0.1),
+          0 0.9375rem 1.40625rem rgba(90, 97, 105, 0.1),
+          0 0.25rem 0.53125rem rgba(90, 97, 105, 0.12),
+          0 0.125rem 0.1875rem rgba(90, 97, 105, 0.1);
+      }
+
+      /* 綠 */
+      .circle.green {
+        background-color: rgb(127, 255, 0);
+      }
+
+      .circle.green > div {
+        color: rgba(255, 255, 255, 1);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app" class="container-fluid">
+      <table style="width: 100%">
+        <tr>
+          <td style="width: 33%">
+            <img
+              style="width: 300px; height: 60px"
+              src="./images/ntust.png"
+              alt="圖片替代文字"
+            />
+          </td>
+          <td style="width: 33%; text-align: center">
+            <span
+              style="
+                font-family: Microsoft JhengHei;
+                font-size: 40px;
+                font-weight: bold;
+              "
+              >Blockchain Monitor</span
+            >
+          </td>
+          <td></td>
+        </tr>
+      </table>
+
+      <br />
+
+      <!-- tab標籤 -->
+      <ul id="myTab" class="nav nav-tabs">
+        <li class="active">
+          <a href="#first" data-toggle="tab">
+            Overall Trust Evaluation Result
+          </a>
+        </li>
+
+        <!-- <li class="dropdown">
+                <a href="#" id="myTabDrop1" class="dropdown-toggle" data-toggle="dropdown">
+                    Nodes Raw Data
+                    <b class="caret">
+                    </b>
+                </a>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="myTabDrop1">
+                    <li>
+                        <a href="#second-1" tabindex="-1" data-toggle="tab">
+                            橋接節點
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#second-2" tabindex="-1" data-toggle="tab">
+                            中繼鏈
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#second-3" tabindex="-1" data-toggle="tab">
+                            API介接
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="#" id="myTabDrop2" class="dropdown-toggle" data-toggle="dropdown">
+                    Log Data
+                    <b class="caret">
+                    </b>
+                </a>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="myTabDrop1">
+                    <li>
+                        <a href="#third-1" tabindex="-1" data-toggle="tab">
+                            中繼鏈
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#third-2" tabindex="-1" data-toggle="tab">
+                            智慧合約
+                        </a>
+                    </li>
+                </ul>
+            </li> -->
+        <!-- <li class="dropdown">
+                <a href="#" id="myTabDrop1" class="dropdown-toggle" data-toggle="dropdown">
+                    各鏈節點評估數值
+                    <b class="caret">
+                    </b>
+                </a>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="myTabDrop1">
+                    <li>
+                        <a href="#fourth-1" tabindex="-1" data-toggle="tab">
+                            原始資料
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#fourth-2" tabindex="-1" data-toggle="tab">
+                            鏈上紀錄
+                        </a>
+                    </li>
+                </ul>
+            </li> -->
+      </ul>
+      <!-- 每個tab頁對應的內容 -->
+
+      <div id="myTabContent" class="tab-content">
+        <div class="tab-pane fade in active" id="first">
+          <div>
+            <div style="font-size: 22px; float: left; padding: 15px">
+              Safety：
+            </div>
+            <div class="circle green" style="float: left"></div>
+          </div>
+
+          <div>
+            <table class="table">
+              <th scope="col">#</th>
+              <th>Node Name</th>
+              <th>Trust Value</th>
+              <th>Risk level</th>
+              <tr v-for="(tv,index) in nodeTrustValue">
+                <td>{{ index + 1 }}</td>
+                <td>{{ tv.id }}</td>
+                <td>{{ tv.trustValue }}</td>
+                <td v-if="tv.trustValue > 0.70" style="color: rgb(0, 204, 0)">
+                  Low
+                </td>
+                <td
+                  v-else-if="tv.trustValue > 0.50"
+                  style="color: rgb(255, 134, 13)"
+                >
+                  Medium
+                </td>
+                <td v-else style="color: rgb(230, 26, 35)">High</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="font-size: 18px">
+            Monitor Contract Address :
+            0x7D1a990f8E5cC2988900862eE77534c2dcf66C92
+          </div>
+          <br />
+
+          <div>Nodes Status</div>
+          <div>
+            <table class="table">
+              <th scope="col">#</th>
+              <th>Node Name</th>
+              <th>CPU</th>
+              <th>Memory</th>
+              <th>Storage</th>
+              <th>Network Latency</th>
+              <th>Network Availability</th>
+              <!-- <th>Network Throughput</th> -->
+              <!-- <th>Risk level</th> -->
+              <tr v-for="(n,index) in nodesData">
+                <td>{{ index + 1 }}</td>
+                <td>{{ n.id }}</td>
+                <td>{{ n.cpu }}</td>
+                <td>{{ n.memory }}</td>
+                <td>{{ n.storage }}</td>
+                <td>{{ n.latency }}</td>
+                <td>{{ n.availability }}</td>
+                <td>{{ n.throughput }}</td>
+                <!-- <td v-if="tv.trustValue > 70" style="color:rgb(0, 204, 0)">Low</td>
+                            <td v-else-if="tv.trustValue > 50" style="color:rgb(255, 134, 13)">Medium</td>
+                            <td v-else style="color:rgb(230, 26, 35)">High</td> -->
+              </tr>
+            </table>
+          </div>
+
+        <div class="tab-pane fade" id="second-1">
+          <div style="font-size: 24px">Original Data</div>
+
+
+          
+        </div>
+        <div class="tab-pane fade" id="second-2">
+          <p>EF 是一款開源的ORM框架。</p>
+        </div>
+        <div class="tab-pane fade" id="second-3">
+          <p>Docker是一個創建高度可擴展性和強大的容器架構。</p>
+        </div>
+      </div>
+    </div>
+    <script src="/javascripts/frontend.js"></script>
+  </body>
+</html>
