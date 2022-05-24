@@ -3,6 +3,7 @@ let Web3 = require('web3');
 let smartContractJson = require('../public/smartcontracts/sideChain.json');
 let abi = smartContractJson.abi;
 require('dotenv').config();
+var ellipticcurve = require("@starkbank/ecdsa");
 
 w3 = new Web3(
     // # demo1's blockchain
@@ -24,16 +25,29 @@ const getMetricsPromise = async (URL) => {
         console.error(error)
     }
 }
-// e.g. "http://192.168.88.129:9090/api/v1/query?query=rpc_duration_eth_getTransactionCount_success_count"
-const getMetricsData = async (URL, _node_i) => {
+
+const getMetricsData = async (URL) => {
     const promiseValue = await getMetricsPromise(URL)
 
     if (promiseValue.data) {
-        // console.log(promiseValue.data.data.result[_node_i].value[1]);
-        return promiseValue.data.data.result[_node_i].value[1];
+        return promiseValue.data.data.result;
     } else {
         console.log("No Data!!!!!!!")
         return 0;
+    }
+}
+
+
+
+const setParam = async (URL, name) => {
+    let metricData = await getMetricsData(URL);
+    for (let i = 0; i < NodeAmount; i++) {
+        try {
+            req_param.nodeMetricsValue[i][name] = parseFloat(metricData[i].value[1]);
+        } catch (e) {
+            req_param.nodeMetricsValue[i][name] = 0
+        }
+
     }
 }
 
@@ -43,32 +57,47 @@ let MetricsDataObj = [
     {
         metricId: 1,
         name: "CPU",
-        URL: "http://192.168.88.129:9090/api/v1/query?query=system_cpu_sysload",
+        URL: "http://140.118.9.225:9090/api/v1/query?query=system_cpu_sysload",
         method: "RayleighCDF_reverse",
-        sigma: 2,
-
+        sigma: 90,
     },
-    // {
-    //     metricId: 2,
-    //     name: "outstanding transaction",
-    //     URL: "http://192.168.88.129:9090/api/v1/query?query=chain_head_block",
-    //     method: "RayleighCDF_reverse",
-    //     sigma: 5
-    // },
-    // {
-    //     metricId: 3,
-    //     name: "outstanding transaction",
-    //     URL: "http://192.168.88.129:9090/api/v1/query?query=txpool_pending",
-    //     method: "RayleighCDF_reverse",
-    //     sigma: 90
-    // }
+    {
+        metricId: 2,
+        name: "Availability",
+        URL: "http://140.118.9.225:9090/api/v1/query?query=node_network_up",
+        method: "zeroOrOne",
+        sigma: 90
+    },
+    {
+        metricId: 3,
+        name: "DiscardedTransaction",
+        URL: "http://140.118.9.225:9090/api/v1/query?query=rpc_duration_eth_sendRawTransaction_failure_count",
+        method: "RayleighCDF_reverse",
+        sigma: 90
+    },
+    {
+        metricId: 4,
+        name: "OutstandingTransaction",
+        URL: "http://140.118.9.225:9090/api/v1/query?query=txpool_queued",
+        method: "RayleighCDF_reverse",
+        sigma: 90
+    },
+    {
+        metricId: 5,
+        name: "Memory",
+        method: "RayleighCDF_reverse",
+        sigma: 90
+    },
+    {
+        metricId: 6,
+        name: "Storage",
+        method: "RayleighCDF_reverse",
+        sigma: 90
+    },
 ];
 
 
 
-
-
-// getMetricsData();
 let NodeAmount = null;
 
 let store_contractAddr = null;
@@ -77,10 +106,10 @@ let nodeTEAry = null;
 let nodeTVAry = null;
 let currentNodeTEAry = null;
 let currentNodeTVAry = null;
-
+let round = null;
 const init = async () => {
     NodeAmount = 5;
-
+    round = 100000000;
     nodeTEAry = new Array();
     nodeTVAry = new Array();
     currentNodeTEAry = new Array();
@@ -91,6 +120,38 @@ const init = async () => {
     for (let i = 0; i < NodeAmount; i++) {
         nodeTEAry.push(await contract.methods.retrieveTE(i).call());
         nodeTVAry.push(await contract.methods.retrieveTV(i).call());
+    }
+
+    // Set easier params, this is not a good implementation
+    for (i in MetricsDataObj) {
+        if (MetricsDataObj[i].metricId < 5) {
+            await setParam(MetricsDataObj[i].URL, MetricsDataObj[i].name)
+        }
+    }
+
+    // Storage
+    let node_filesystem_avail_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_filesystem_avail_bytes");
+    let node_filesystem_size_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_filesystem_size_bytes");
+
+    for (let i = 0; i < 5; i++) {
+        let avail = node_filesystem_avail_bytes_promise.data.data.result[i * 5].value[1];
+        let size = node_filesystem_size_bytes_promise.data.data.result[i * 5].value[1];
+        req_param.nodeMetricsValue[i].Storage = Math.round((100 - (100 * parseFloat(avail) / parseFloat(size))) * 100) / 100;
+    }
+
+
+    // Memory
+    let node_memory_MemFree_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_MemFree_bytes");
+    let node_memory_Cached_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_Cached_bytes");
+    let node_memory_Buffers_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_Buffers_bytes");
+    let node_memory_MemTotal_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_MemTotal_bytes");
+
+    for (let i = 0; i < 5; i++) {
+        let MemFree = node_memory_MemFree_bytes_promise.data.data.result[i].value[1];
+        let Cached = node_memory_Cached_bytes_promise.data.data.result[i].value[1];
+        let Buffers = node_memory_Buffers_bytes_promise.data.data.result[i].value[1];
+        let MemTotal = node_memory_MemTotal_bytes_promise.data.data.result[i].value[1];
+        req_param.nodeMetricsValue[i].Memory = Math.round(100 * (1 - (parseFloat(MemFree) + parseFloat(Cached) + parseFloat(Buffers)) / parseFloat(MemTotal)) * 100) / 100;
     }
 }
 
@@ -103,33 +164,43 @@ const RayleighCDF_reverse = (metric, sigma) => {
 }
 
 let req_param = {
-    "store_contractAddress": "0x16F31507E1f904D78823CA3bc3e5226Fa05c7A7A",
     "nodeMetricsValue": [{}, {}, {}, {}, {}]
 }
 
-const computeNodesTE = async () => {
+
+
+
+
+const computeNodesTE = () => {
 
     for (let i = 0; i < NodeAmount; i++) {
         let TE = 1.0;
         for (j in MetricsDataObj) {
-            // console.log("retrieving '" + MetricsDataObj[j].name + "' data");
-            let metric = await getMetricsData(MetricsDataObj[j].URL, i);
-            console.log("metric : " + metric);
+            let metric = req_param.nodeMetricsValue[i][MetricsDataObj[j].name];
+            if (MetricsDataObj[j].method === "RayleighCDF") {
+                TE *= RayleighCDF(metric, MetricsDataObj[j].sigma);
+            } else if (MetricsDataObj[j].method === "RayleighCDF_reverse") {
+                // console.log("RayleighCDF_reverse");
+                TE *= RayleighCDF_reverse(metric, MetricsDataObj[j].sigma);
+            } else {
+                // console.log("zeroOrOne");
+                TE *= metric;
+            }
 
             // add metirc into req_param
             req_param.nodeMetricsValue[i][MetricsDataObj[j].name] = metric;
 
-            TE *= RayleighCDF(metric, MetricsDataObj[j].sigma);
+
             // console.log(TE);
         }
         // There's no float in smart contract
-        currentNodeTEAry.push(TE.toString());
+        currentNodeTEAry.push((Math.round(TE * round) / round).toString());
     }
 
 }
 
 const getAvgTE_i = (node_i) => {
-    // console.log("getAvgTE_" + node_i + "length = " + nodeTEAry[node_i].length)
+
     let sumTE = 0.0;
 
     if (nodeTEAry[node_i].length >= 1) {
@@ -161,24 +232,41 @@ const computeNodesTV = () => {
         let TV = 0.0;
         // initial TVi,0 = 0
         if (nodeTVAry[i].length < 1) {
-            // TV = (1 / e) * weight + (Math.exp(-2 * param_x) * 0 / e);
-            TV = (1 / e) * latest_TE_i + (Math.exp(-2 * param_x) * 1 / e);;
+            TV = (1 / e) * latest_TE_i + (Math.exp(-2 * param_x) * 1 / e);
         } else {
             TV = (1 / e) * latest_TE_i * weight + (Math.exp(-2 * param_x) * nodeTVAry[i][previous_i] / e);
         }
-        currentNodeTVAry.push(TV.toString());
+        currentNodeTVAry.push((Math.round(TV * round) / round).toString());
         // console.log("-------------------------------------------------");
     }
 }
 
+const sign_request = (req_param) => {
+
+    let msg = JSON.stringify(req_param);
+
+    var Ecdsa = ellipticcurve.Ecdsa;
+    var privateKey = ellipticcurve.PrivateKey.fromString(process.env.PRIVATE_KEY);
+
+
+    let signature = Ecdsa.sign(msg, privateKey);
+    return signature.toBase64();
+}
 
 const start = async () => {
     await init();
-    console.log("Local : Start computing TE...");
-    await computeNodesTE();
 
+    console.log("Local : Start computing TE...");
+    computeNodesTE();
+    console.log(req_param);
     console.log("Uploading metrics to relay_chain.");
-    axios.post('http://127.0.0.1:5000/blockchain/smartcontract', req_param);
+    let signature = sign_request(req_param);
+    let req = {
+        msg: req_param,
+        signature: signature
+    }
+    console.log(req);
+    axios.post('http://127.0.0.1:5000/blockchain/smartcontract', req);
 
     console.log("Local : Start computing TV...");
     computeNodesTV();
@@ -193,8 +281,6 @@ const start = async () => {
     console.log("Done!");
 }
 
-
-// start();
 
 
 

@@ -41,16 +41,14 @@ app.use(function (err, req, res, next) {
 
 
 
-var taskFreq5 = '*/1 * * * *'
-var taskFreq2 = '*/2 * * * *'
+var taskFreq = '*/10 * * * *'
 
-schedule.scheduleJob(taskFreq5, () => {
+
+schedule.scheduleJob(taskFreq, () => {
   agent.runAgent();
 });
 
-// var sche30 = schedule.scheduleJob(taskFreq30, () => {
-//   console.log('now2 is :' + new Date)
-// });
+
 
 
 module.exports = app;

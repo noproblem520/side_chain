@@ -161,7 +161,7 @@
             </div>
             <div class="circle green" style="float: left"></div>
           </div>
-
+          <button @click="verification()">verify data integrity</button>
           <div>
             <table class="table">
               <th scope="col">#</th>
@@ -194,30 +194,31 @@
 
           <div>Nodes Status</div>
           <div>
-            <table class="table">
-              <th scope="col">#</th>
-              <th>Node Name</th>
-              <th>CPU</th>
-              <th>Memory</th>
-              <th>Storage</th>
-              <th>Network Latency</th>
-              <th>Network Availability</th>
-              <!-- <th>Network Throughput</th> -->
-              <!-- <th>Risk level</th> -->
-              <tr v-for="(n,index) in nodesData">
-                <td>{{ index + 1 }}</td>
-                <td>{{ n.id }}</td>
-                <td>{{ n.cpu }}</td>
-                <td>{{ n.memory }}</td>
-                <td>{{ n.storage }}</td>
-                <td>{{ n.latency }}</td>
-                <td>{{ n.availability }}</td>
-                <td>{{ n.throughput }}</td>
-                <!-- <td v-if="tv.trustValue > 70" style="color:rgb(0, 204, 0)">Low</td>
-                            <td v-else-if="tv.trustValue > 50" style="color:rgb(255, 134, 13)">Medium</td>
-                            <td v-else style="color:rgb(230, 26, 35)">High</td> -->
-              </tr>
-            </table>
+            <div>
+              <table class="table">
+                  <th scope="col">#</th>
+                  <th>Node Name</th>
+                  <th>CPU</th>
+                  <th>Memory</th>
+                  <th>Storage</th>
+                  <th>Network Availability</th>
+                  <th>LatestBlockNumber</th>
+                  <th>DiscardedTransaction</th>
+                  <th>OutstandingTransaction</th>
+                  <!-- <th>Network Throughput</th> -->
+                  <!-- <th>Risk level</th> -->
+                  <tr v-for="(n,index) in nodesData">
+                      <td>{{ index+1 }}</td>
+                      <td>{{ n.id }}</td>
+                      <td>{{ n.CPU }}</td>
+                      <td>{{ n.Memory }}</td>
+                      <td>{{ n.Storage }}</td>
+                      <td>{{ n.Availability }}</td>
+                      <td>{{ n.LatestBlockNumber }}</td>
+                      <td>{{ n.DiscardedTransaction }}</td>
+                      <td>{{ n.OutstandingTransaction }}</td>
+                  </tr>
+              </table>
           </div>
 
         <div class="tab-pane fade" id="second-1">
