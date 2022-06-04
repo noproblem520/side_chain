@@ -6,13 +6,16 @@ Vue.createApp({
             metrics: [],
             nodesData: [],
             TE: [],
-
+            BaseURL: "",
+            relayChainIP: "",
+            localIP: "",
         };
     },
     methods: {
         init: async function () {
+            console.log(this);
             let latestTVAry = await axios.get(
-                "http://127.0.0.1:3000/blockchain/getLatestTVAry"
+                this.localIP + "/blockchain/getLatestTVAry"
             );
 
             this.nodeTrustValue = [
@@ -39,27 +42,27 @@ Vue.createApp({
                 {
                     metricId: 1,
                     name: "CPU",
-                    URL: "http://140.118.9.225:9090/api/v1/query?query=system_cpu_sysload",
+                    URL: this.BaseURL + "/api/v1/query?query=system_cpu_sysload",
                 },
                 {
                     metricId: 2,
                     name: "Availability",
-                    URL: "http://140.118.9.225:9090/api/v1/query?query=node_network_up",
+                    URL: this.BaseURL + "/api/v1/query?query=node_network_up",
                 },
                 {
                     metricId: 3,
                     name: "LatestBlockNumber",
-                    URL: "http://140.118.9.225:9090/api/v1/query?query=chain_head_block",
+                    URL: this.BaseURL + "/api/v1/query?query=chain_head_block",
                 },
                 {
                     metricId: 4,
                     name: "DiscardedTransaction",
-                    URL: "http://140.118.9.225:9090/api/v1/query?query=rpc_duration_eth_sendRawTransaction_failure_count",
+                    URL: this.BaseURL + "/api/v1/query?query=rpc_duration_eth_sendRawTransaction_failure_count",
                 },
                 {
                     metricId: 5,
                     name: "OutstandingTransaction",
-                    URL: "http://140.118.9.225:9090/api/v1/query?query=txpool_queued",
+                    URL: this.BaseURL + "/api/v1/query?query=txpool_queued",
                 },
 
 
@@ -81,8 +84,8 @@ Vue.createApp({
                 }
             }
             // Storage
-            let node_filesystem_avail_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_filesystem_avail_bytes");
-            let node_filesystem_size_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_filesystem_size_bytes");
+            let node_filesystem_avail_bytes_promise = await axios.get(this.BaseURL + "/api/v1/query?query=node_filesystem_avail_bytes");
+            let node_filesystem_size_bytes_promise = await axios.get(this.BaseURL + "/api/v1/query?query=node_filesystem_size_bytes");
 
             for (let i = 0; i < 5; i++) {
                 let avail = node_filesystem_avail_bytes_promise.data.data.result[i * 5].value[1];
@@ -92,10 +95,10 @@ Vue.createApp({
 
 
             // Memory
-            let node_memory_MemFree_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_MemFree_bytes");
-            let node_memory_Cached_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_Cached_bytes");
-            let node_memory_Buffers_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_Buffers_bytes");
-            let node_memory_MemTotal_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_MemTotal_bytes");
+            let node_memory_MemFree_bytes_promise = await axios.get(this.BaseURL + "/api/v1/query?query=node_memory_MemFree_bytes");
+            let node_memory_Cached_bytes_promise = await axios.get(this.BaseURL + "/api/v1/query?query=node_memory_Cached_bytes");
+            let node_memory_Buffers_bytes_promise = await axios.get(this.BaseURL + "/api/v1/query?query=node_memory_Buffers_bytes");
+            let node_memory_MemTotal_bytes_promise = await axios.get(this.BaseURL + "/api/v1/query?query=node_memory_MemTotal_bytes");
 
             for (let i = 0; i < 5; i++) {
                 let MemFree = node_memory_MemFree_bytes_promise.data.data.result[i].value[1];
@@ -106,19 +109,22 @@ Vue.createApp({
             }
 
         },
-        verification: async () => {
+        verification: async function () {
+
             let localAvgTV = await axios.get(
-                "http://127.0.0.1:3000/blockchain/getAvgTV"
+                this.localIP + "/blockchain/getAvgTV"
             );
 
+
             let relayChainAvgTV = await axios.get(
-                "http://127.0.0.1:5000/blockchain/smartcontract/0x9F9eEE45Ac57d549d463AfC10Fc32721F711e869"
+                this.relayChainIP + "/blockchain/smartcontract/0x3024D80C182066756411af08D07cCe34e5D2526d"
             );
 
             console.log("localAvgTV.data.result = " + localAvgTV.data.result);
             console.log("relayChainAvgTV.data.result = " + relayChainAvgTV.data.result);
             alert(localAvgTV.data.result === relayChainAvgTV.data.result);
-        }
+        },
+
     },
     mounted() {
         this.init();

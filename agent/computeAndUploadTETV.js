@@ -4,11 +4,9 @@ let smartContractJson = require('../public/smartcontracts/sideChain.json');
 let abi = smartContractJson.abi;
 require('dotenv').config();
 var ellipticcurve = require("@starkbank/ecdsa");
+let baseURL = process.env.BASE_URL;
 
 w3 = new Web3(
-    // # demo1's blockchain
-    // # Web3.HTTPProvider("HTTP://140.118.9.225:23001")
-    //  VM blockchai
     process.env.BLOCKCHAIN_RPC
 )
 
@@ -57,28 +55,28 @@ let MetricsDataObj = [
     {
         metricId: 1,
         name: "CPU",
-        URL: "http://140.118.9.225:9090/api/v1/query?query=system_cpu_sysload",
+        URL: baseURL + "/api/v1/query?query=system_cpu_sysload",
         method: "RayleighCDF_reverse",
         sigma: 90,
     },
     {
         metricId: 2,
         name: "Availability",
-        URL: "http://140.118.9.225:9090/api/v1/query?query=node_network_up",
+        URL: baseURL + "/api/v1/query?query=node_network_up",
         method: "zeroOrOne",
         sigma: 90
     },
     {
         metricId: 3,
         name: "DiscardedTransaction",
-        URL: "http://140.118.9.225:9090/api/v1/query?query=rpc_duration_eth_sendRawTransaction_failure_count",
+        URL: baseURL + "/api/v1/query?query=rpc_duration_eth_sendRawTransaction_failure_count",
         method: "RayleighCDF_reverse",
         sigma: 90
     },
     {
         metricId: 4,
         name: "OutstandingTransaction",
-        URL: "http://140.118.9.225:9090/api/v1/query?query=txpool_queued",
+        URL: baseURL + "/api/v1/query?query=txpool_queued",
         method: "RayleighCDF_reverse",
         sigma: 90
     },
@@ -115,6 +113,7 @@ const init = async () => {
     currentNodeTEAry = new Array();
     currentNodeTVAry = new Array();
 
+
     store_contractAddr = process.env.MONITOR_CONTRACT;
     let contract = new w3.eth.Contract(abi, store_contractAddr);
     for (let i = 0; i < NodeAmount; i++) {
@@ -130,8 +129,8 @@ const init = async () => {
     }
 
     // Storage
-    let node_filesystem_avail_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_filesystem_avail_bytes");
-    let node_filesystem_size_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_filesystem_size_bytes");
+    let node_filesystem_avail_bytes_promise = await axios.get(baseURL + "/api/v1/query?query=node_filesystem_avail_bytes");
+    let node_filesystem_size_bytes_promise = await axios.get(baseURL + "/api/v1/query?query=node_filesystem_size_bytes");
 
     for (let i = 0; i < 5; i++) {
         let avail = node_filesystem_avail_bytes_promise.data.data.result[i * 5].value[1];
@@ -141,10 +140,10 @@ const init = async () => {
 
 
     // Memory
-    let node_memory_MemFree_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_MemFree_bytes");
-    let node_memory_Cached_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_Cached_bytes");
-    let node_memory_Buffers_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_Buffers_bytes");
-    let node_memory_MemTotal_bytes_promise = await axios.get("http://140.118.9.225:9090/api/v1/query?query=node_memory_MemTotal_bytes");
+    let node_memory_MemFree_bytes_promise = await axios.get(baseURL + "/api/v1/query?query=node_memory_MemFree_bytes");
+    let node_memory_Cached_bytes_promise = await axios.get(baseURL + "/api/v1/query?query=node_memory_Cached_bytes");
+    let node_memory_Buffers_bytes_promise = await axios.get(baseURL + "/api/v1/query?query=node_memory_Buffers_bytes");
+    let node_memory_MemTotal_bytes_promise = await axios.get(baseURL + "/api/v1/query?query=node_memory_MemTotal_bytes");
 
     for (let i = 0; i < 5; i++) {
         let MemFree = node_memory_MemFree_bytes_promise.data.data.result[i].value[1];
@@ -186,11 +185,8 @@ const computeNodesTE = () => {
                 // console.log("zeroOrOne");
                 TE *= metric;
             }
-
             // add metirc into req_param
             req_param.nodeMetricsValue[i][MetricsDataObj[j].name] = metric;
-
-
             // console.log(TE);
         }
         // There's no float in smart contract
@@ -254,31 +250,38 @@ const sign_request = (req_param) => {
 }
 
 const start = async () => {
+    // 1. get Metrics and set them into variable => req_param
+    // 2. get previous TE and TV in the smart contract
+    // 3. reset variables which will be used later
     await init();
 
-    console.log("Local : Start computing TE...");
-    computeNodesTE();
-    console.log(req_param);
     console.log("Uploading metrics to relay_chain.");
     let signature = sign_request(req_param);
     let req = {
         msg: req_param,
-        signature: signature
+        signature: signature,
+        apikey: process.env.API_KEY
     }
-    console.log(req);
-    axios.post('http://127.0.0.1:5000/blockchain/smartcontract', req);
 
-    console.log("Local : Start computing TV...");
-    computeNodesTV();
+    let result = await axios.post(process.env.RELAY_CAHIN_BASE_URL + '/blockchain/smartcontract', req);
 
-    console.log("uploading TE to smart contract...");
-    await uploadTETV();
 
-    console.log("TE在下");
-    console.log(currentNodeTEAry);
-    console.log("TV在下");
-    console.log(currentNodeTVAry);
-    console.log("Done!");
+    console.log(result.data);
+    if (result.data === "Success!") {
+        console.log("Local : Start computing TE...");
+        computeNodesTE();
+        console.log("Local : Start computing TV...");
+        computeNodesTV();
+        console.log("uploading TE to smart contract...");
+        await uploadTETV();
+        console.log("TE在下");
+        console.log(currentNodeTEAry);
+        console.log("TV在下");
+        console.log(currentNodeTVAry);
+        console.log("Done!");
+    } else {
+        console.log("error");
+    }
 }
 
 
@@ -311,11 +314,10 @@ const uploadTETV = async () => {
     }
 }
 
-// step：getMetricsData => RayleighCDF => pushTonodeTEAry => upload TE to SmartContract
+// step：getMetricsData => RayleighCDF => pushToNodeTEAry => upload TE and TV to SmartContract
 
 module.exports = {
     runAgent: async () => {
-        console.log("now is uploading");
         await start();
     }
 }

@@ -5,9 +5,6 @@ let bytecode = smartContractJson.bytecode;
 
 require('dotenv').config();
 w3 = new Web3(
-    // # demo1's blockchain
-    // # Web3.HTTPProvider("HTTP://140.118.9.225:23001")
-    //  VM blockchain
     process.env.BLOCKCHAIN_RPC
 )
 let my_address = process.env.PUBLIC_KEY;

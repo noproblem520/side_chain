@@ -87,80 +87,17 @@
             Overall Trust Evaluation Result
           </a>
         </li>
-
-        <!-- <li class="dropdown">
-                <a href="#" id="myTabDrop1" class="dropdown-toggle" data-toggle="dropdown">
-                    Nodes Raw Data
-                    <b class="caret">
-                    </b>
-                </a>
-                <ul class="dropdown-menu" role="menu" aria-labelledby="myTabDrop1">
-                    <li>
-                        <a href="#second-1" tabindex="-1" data-toggle="tab">
-                            橋接節點
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#second-2" tabindex="-1" data-toggle="tab">
-                            中繼鏈
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#second-3" tabindex="-1" data-toggle="tab">
-                            API介接
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <li class="dropdown">
-                <a href="#" id="myTabDrop2" class="dropdown-toggle" data-toggle="dropdown">
-                    Log Data
-                    <b class="caret">
-                    </b>
-                </a>
-                <ul class="dropdown-menu" role="menu" aria-labelledby="myTabDrop1">
-                    <li>
-                        <a href="#third-1" tabindex="-1" data-toggle="tab">
-                            中繼鏈
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#third-2" tabindex="-1" data-toggle="tab">
-                            智慧合約
-                        </a>
-                    </li>
-                </ul>
-            </li> -->
-        <!-- <li class="dropdown">
-                <a href="#" id="myTabDrop1" class="dropdown-toggle" data-toggle="dropdown">
-                    各鏈節點評估數值
-                    <b class="caret">
-                    </b>
-                </a>
-                <ul class="dropdown-menu" role="menu" aria-labelledby="myTabDrop1">
-                    <li>
-                        <a href="#fourth-1" tabindex="-1" data-toggle="tab">
-                            原始資料
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#fourth-2" tabindex="-1" data-toggle="tab">
-                            鏈上紀錄
-                        </a>
-                    </li>
-                </ul>
-            </li> -->
       </ul>
       <!-- 每個tab頁對應的內容 -->
 
       <div id="myTabContent" class="tab-content">
         <div class="tab-pane fade in active" id="first">
-          <div>
+          <!-- <div>
             <div style="font-size: 22px; float: left; padding: 15px">
               Safety：
             </div>
             <div class="circle green" style="float: left"></div>
-          </div>
+          </div> -->
           <button @click="verification()">verify data integrity</button>
           <div>
             <table class="table">
@@ -186,10 +123,6 @@
             </table>
           </div>
 
-          <div style="font-size: 18px">
-            Monitor Contract Address :
-            0x7D1a990f8E5cC2988900862eE77534c2dcf66C92
-          </div>
           <br />
 
           <div>Nodes Status</div>
@@ -204,7 +137,7 @@
                   <th>Network Availability</th>
                   <th>LatestBlockNumber</th>
                   <th>DiscardedTransaction</th>
-                  <th>OutstandingTransaction</th>
+                  <th>PendingTransaction</th>
                   <!-- <th>Network Throughput</th> -->
                   <!-- <th>Risk level</th> -->
                   <tr v-for="(n,index) in nodesData">
@@ -221,18 +154,7 @@
               </table>
           </div>
 
-        <div class="tab-pane fade" id="second-1">
-          <div style="font-size: 24px">Original Data</div>
 
-
-          
-        </div>
-        <div class="tab-pane fade" id="second-2">
-          <p>EF 是一款開源的ORM框架。</p>
-        </div>
-        <div class="tab-pane fade" id="second-3">
-          <p>Docker是一個創建高度可擴展性和強大的容器架構。</p>
-        </div>
       </div>
     </div>
     <script src="/javascripts/frontend.js"></script>
