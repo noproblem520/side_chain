@@ -13,7 +13,6 @@ Vue.createApp({
     },
     methods: {
         init: async function () {
-            console.log(this);
             let latestTVAry = await axios.get(
                 this.localIP + "/blockchain/getLatestTVAry"
             );
